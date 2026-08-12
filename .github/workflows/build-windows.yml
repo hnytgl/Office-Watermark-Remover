@@ -8,6 +8,8 @@ on:
       - "office_watermark_remover.py"
       - "office_watermark_gui.py"
       - "office_watermark_gui_lite.py"
+      - "office_watermark_gui_v2.py"
+      - "pdf_roundtrip.py"
       - "requirements.txt"
       - ".github/workflows/build-windows.yml"
 
@@ -44,7 +46,7 @@ jobs:
             --windowed `
             --optimize 2 `
             --name OfficeWatermarkRemover `
-            office_watermark_gui.py
+            office_watermark_gui_v2.py
 
       - name: Build Lite EXE
         shell: pwsh
@@ -86,40 +88,44 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Create or update v1.0.1 Release
+      - name: Create or update v1.1.0 Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $notes = @"
-          ## Office Watermark Remover v1.0.1
+          ## Office Watermark Remover v1.1.0
 
-          Windows 构建体积优化版。
+          PDF 去水印流程升级版。
 
-          ### 本版优化
-          - 移除 `--collect-all tkinterdnd2`，改用 PyInstaller 平台专用 hook，避免打入无关平台的 TkDnD 二进制
-          - 新增 Lite 轻量版，不打包 PyMuPDF，适合只处理 Word / Excel / PowerPoint / WPS / OpenDocument 的用户
-          - 完整版继续保留 PDF 处理能力
-          - 两个版本继续共用同一套 Office/WPS 去水印核心逻辑
+          ### PDF 处理改进
+          - 新增默认流程：PDF → Microsoft Word → Word 去水印 → PDF
+          - 转换前自动识别重复/斜向的疑似水印文字，并作为 Word 层精确删除目标
+          - PDF 转 Word 后可处理正文层中的水印文本、VML/DrawingML 水印对象
+          - Word 往返失败时自动回退到原来的 PDF 直接处理模式
+          - 不引入 pdf2docx 等额外大型依赖，控制完整版体积
 
-          ### 下载建议
-          - `OfficeWatermarkRemover-Lite.exe`：轻量版，不含 PDF，日常 Word/Excel/PPT/WPS 优先下载
-          - `OfficeWatermarkRemover.exe`：完整版，包含 PDF 支持
+          ### 使用说明
+          - 推荐模式需要 Windows 已安装桌面版 Microsoft Word
+          - 复杂排版、扫描件、图片型水印在两次转换后仍可能需要人工复核
+          - Lite 版继续不含 PDF 功能，体积更小
+
+          ### 下载
+          - `OfficeWatermarkRemover.exe`：完整版，包含新的 PDF→Word→PDF 去水印流程
+          - `OfficeWatermarkRemover-Lite.exe`：轻量版，不含 PDF
           - `OfficeWatermarkRemover-Windows.zip`：两个 EXE + README
-
-          > 建议仅处理有权修改的文件；正式材料处理后请人工复核版式和内容完整性。
           "@
           $notes | Set-Content -Path release-notes.md -Encoding UTF8
 
-          gh release view v1.0.1 *> $null
+          gh release view v1.1.0 *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create v1.0.1 `
+            gh release create v1.1.0 `
               --target $env:GITHUB_SHA `
-              --title "Office Watermark Remover v1.0.1" `
+              --title "Office Watermark Remover v1.1.0" `
               --notes-file release-notes.md
           }
 
-          gh release upload v1.0.1 `
+          gh release upload v1.1.0 `
             dist\OfficeWatermarkRemover.exe `
             dist\OfficeWatermarkRemover-Lite.exe `
             OfficeWatermarkRemover-Windows.zip `
