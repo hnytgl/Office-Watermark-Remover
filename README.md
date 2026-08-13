@@ -125,7 +125,7 @@ python office_watermark_remover.py "材料.docx"
 ### 指定水印文字
 
 ```powershell
-python office_watermark_remover.py "材料.docx" --text "顾磊" --text "2026-08-12"
+python office_watermark_remover.py "材料.docx" --text "张三" --text "2026-08-12"
 ```
 
 当自动识别不到某些特殊水印时，指定水印文字通常更稳。
